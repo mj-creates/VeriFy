@@ -31,12 +31,12 @@ SYSTEM_PROMPT = """You are Sol, the Final Synthesis Agent.
 """
 
 class SolSynthesisAgent:
-    def __init__(self, api_key: str = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
         """
         Initializes the Sol Synthesis Agent.
-        Defaults to using the OPENAI_API_KEY environment variable if no key is provided.
+        Defaults to using the GEMINI_API_KEY environment variable if no key is provided.
         """
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=api_key or os.getenv("GEMINI_API_KEY"), base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         self.model = model
 
     def generate_final_response(self, query: str, nova_verdict: Dict[str, Any]) -> str:

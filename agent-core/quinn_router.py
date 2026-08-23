@@ -40,12 +40,12 @@ SYSTEM_PROMPT = """You are Quinn, the Intake/Router Agent.
 """
 
 class QuinnRouterAgent:
-    def __init__(self, api_key: str = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
         """
         Initializes the Quinn Router Agent.
-        Defaults to using the OPENAI_API_KEY environment variable if no key is provided.
+        Defaults to using the GEMINI_API_KEY environment variable if no key is provided.
         """
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=api_key or os.getenv("GEMINI_API_KEY"), base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         self.model = model
 
     def route_query(self, query: str) -> dict:
@@ -67,8 +67,8 @@ class QuinnRouterAgent:
 
 # --- Example Usage ---
 if __name__ == "__main__":
-    # To run this example, make sure to set your OPENAI_API_KEY environment variable.
-    # $env:OPENAI_API_KEY="your-key"
+    # To run this example, make sure to set your GEMINI_API_KEY environment variable.
+    # $env:GEMINI_API_KEY="your-key"
     try:
         agent = QuinnRouterAgent()
         

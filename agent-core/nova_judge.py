@@ -44,12 +44,12 @@ SYSTEM_PROMPT = """You are Nova, the Debate and Consensus Judge Agent.
 """
 
 class NovaJudgeAgent:
-    def __init__(self, api_key: str = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
         """
         Initializes the Nova Judge Agent.
-        Defaults to using the OPENAI_API_KEY environment variable if no key is provided.
+        Defaults to using the GEMINI_API_KEY environment variable if no key is provided.
         """
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=api_key or os.getenv("GEMINI_API_KEY"), base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         self.model = model
 
     def judge_research(self, claim: str, research_outputs: List[Dict[str, Any]]) -> dict:

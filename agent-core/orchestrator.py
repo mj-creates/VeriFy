@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import json
 from concurrent.futures import ThreadPoolExecutor
 
@@ -11,13 +13,13 @@ from nova_judge import NovaJudgeAgent
 from sol_synthesis import SolSynthesisAgent
 
 class VeriFyOrchestrator:
-    def __init__(self, api_key: str = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
         """
         Initializes the entire VeriFy pipeline and connects all sub-agents.
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is missing. Please set it.")
+            raise ValueError("GEMINI_API_KEY environment variable is missing. Please set it.")
             
         self.model = model
         
@@ -85,10 +87,10 @@ class VeriFyOrchestrator:
 if __name__ == "__main__":
     import sys
     
-    if not os.getenv("OPENAI_API_KEY"):
-        print("CRITICAL: OPENAI_API_KEY environment variable is not set.")
-        print("Windows PowerShell: $env:OPENAI_API_KEY='sk-yourkey'")
-        print("Mac/Linux: export OPENAI_API_KEY='sk-yourkey'")
+    if not os.getenv("GEMINI_API_KEY"):
+        print("CRITICAL: GEMINI_API_KEY environment variable is not set.")
+        print("Windows PowerShell: $env:GEMINI_API_KEY='sk-yourkey'")
+        print("Mac/Linux: export GEMINI_API_KEY='sk-yourkey'")
         sys.exit(1)
         
     try:
