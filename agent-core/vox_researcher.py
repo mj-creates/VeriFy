@@ -49,19 +49,7 @@ SYSTEM_PROMPT = """You are Vox, the News and Current Events Researcher Agent.
 }
 """
 
-# --- Dummy Tool Implementations ---
-# In a production environment, this could use NewsAPI, Google News via SerpAPI, etc.
-def search(query: str) -> str:
-    """Executes a web search query for news and current events."""
-    print(f"  [Tool: search] Executing news search for: '{query}'")
-    # Simulated response
-    return f"Search results for {query}: [Link 1: https://www.reuters.com/article/mock-news, Title: Breaking Updates]"
-
-def browser(url: str) -> str:
-    """Reads the content of a news webpage."""
-    print(f"  [Tool: browser] Reading news article from: '{url}'")
-    # Simulated response
-    return f"Content of {url}: Recent reports indicate that the latest timeline has been shifted, according to major industry circulars."
+from tools import search, browser
 
 TOOLS = [
     {

@@ -49,19 +49,7 @@ SYSTEM_PROMPT = """You are Vera, the Institutional Researcher Agent.
 }
 """
 
-# --- Dummy Tool Implementations ---
-# In a real environment, you would replace these with actual API calls (e.g. Tavily, SerpApi, Playwright)
-def search(query: str) -> str:
-    """Executes a web search query."""
-    print(f"  [Tool: search] Executing search for: '{query}'")
-    # Simulated response
-    return f"Search results for {query}: [Link: https://www.federalreserve.gov/monetarypolicy.htm, Title: Official Monetary Policy]"
-
-def browser(url: str) -> str:
-    """Reads the content of a webpage at the given URL."""
-    print(f"  [Tool: browser] Reading content from: '{url}'")
-    # Simulated response
-    return f"Content of {url}: The official stance is that the federal funds rate remains unchanged at 5.25 to 5.50 percent as of recent meetings."
+from tools import search, browser
 
 TOOLS = [
     {

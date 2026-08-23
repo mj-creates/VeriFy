@@ -49,19 +49,7 @@ SYSTEM_PROMPT = """You are Trace, the Secondary Source Researcher Agent.
 }
 """
 
-# --- Dummy Tool Implementations ---
-# In a real environment, you might use Reddit API (PRAW), Apify, or specific search APIs
-def search(query: str) -> str:
-    """Executes a web search query focused on forums and social media."""
-    print(f"  [Tool: search] Executing community search for: '{query}'")
-    # Simulated response
-    return f"Search results for {query}: [Link 1: https://www.reddit.com/r/example/comments/1234, Title: Megathread on the topic]"
-
-def browser(url: str) -> str:
-    """Reads the content of a forum or social media thread."""
-    print(f"  [Tool: browser] Reading community thread from: '{url}'")
-    # Simulated response
-    return f"Content of {url}: Users are discussing anecdotal workarounds. The top comment with 5k upvotes states they found a hacky solution, but a rumor is spreading that it might get patched."
+from tools import search, browser
 
 TOOLS = [
     {
