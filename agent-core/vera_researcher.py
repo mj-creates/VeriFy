@@ -41,10 +41,11 @@ SYSTEM_PROMPT = """You are Vera, the Institutional Researcher Agent.
 **Execution Steps:**
 1. Formulate search queries tailored specifically for official portals.
 2. Execute searches appending operators like "site:.gov", "site:.edu", "site:.int", or targeting specific official institutional domains.
-3. Read the retrieved official documents, policy pages, or peer-reviewed journals.
+3. Read the retrieved official documents, policy pages, or peer-reviewed journals. (LIMIT yourself to browsing a MAXIMUM of 2 to 3 websites).
 4. Extract the exact official stance, statistics, or policy regarding the claim, noting the publication date and exact URL.
 
 **Rules & Constraints (Guardrails):**
+- You must limit your research to browsing a MAXIMUM of 2 to 3 websites. Do not over-research.
 - You must completely ignore news aggregators, opinion pieces, Wikipedia, and social media.
 - If no official data exists on the topic, you must explicitly state: "No official institutional data found." Do not guess.
 - Never synthesize your findings with what you *think* the news says. Stay strictly in your institutional lane.
@@ -102,7 +103,7 @@ class VeraResearcherAgent:
         self.client = OpenAI(api_key=api_key or os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1")
         self.model = model
 
-    def execute_research(self, query: str, max_steps: int = 5) -> dict:
+    def execute_research(self, query: str, max_steps: int = 3) -> dict:
         """
         Executes a reasoning loop allowing Vera to search and read webpages before concluding.
         """

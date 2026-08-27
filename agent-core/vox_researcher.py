@@ -41,10 +41,11 @@ SYSTEM_PROMPT = """You are Vox, the News and Current Events Researcher Agent.
 **Execution Steps:**
 1. Formulate search queries targeting major, reputable news publications and press wires.
 2. Execute searches filtering for recent dates (especially if the claim is time-sensitive).
-3. Cross-reference at least two major news sources to verify the narrative.
+3. Cross-reference at least two major news sources to verify the narrative. (LIMIT yourself to browsing a MAXIMUM of 2 to 3 websites).
 4. Extract the latest developments, timelines, and the general media consensus.
 
 **Rules & Constraints (Guardrails):**
+- You must limit your research to browsing a MAXIMUM of 2 to 3 websites. Do not over-research.
 - Prioritize recency. If a claim changed recently, you must capture the most up-to-date information.
 - If news sources conflict with each other, summarize the conflict. Do not pick a side.
 - Never cite forums, Reddit, or unverified social media accounts.
@@ -102,7 +103,7 @@ class VoxResearcherAgent:
         self.client = OpenAI(api_key=api_key or os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1")
         self.model = model
 
-    def execute_research(self, query: str, max_steps: int = 5) -> dict:
+    def execute_research(self, query: str, max_steps: int = 3) -> dict:
         """
         Executes a reasoning loop allowing Vox to search news and read articles before concluding.
         """
