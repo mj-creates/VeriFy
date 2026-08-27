@@ -13,7 +13,7 @@ from nova_judge import NovaJudgeAgent
 from sol_synthesis import SolSynthesisAgent
 
 class VeriFyOrchestrator:
-    def __init__(self, api_key: str = None, model: str = "openai/gpt-oss-120b"):
+    def __init__(self, api_key: str = None, model: str = "llama3-8b-8192"):
         """
         Initializes the entire VeriFy pipeline and connects all sub-agents.
         """

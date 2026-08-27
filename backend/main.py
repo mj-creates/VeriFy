@@ -76,9 +76,11 @@ class TokenResponse(BaseModel):
 class QueryRequest(BaseModel):
     query: str
 
+from typing import Optional
+
 class QueryResponse(BaseModel):
-    response: dict = None
-    error: str = None
+    response: Optional[dict] = None
+    error: Optional[str] = None
 
 # --- Routes ---
 @app.get("/")

@@ -55,7 +55,7 @@ SYSTEM_PROMPT = """You are Nova, the Debate and Consensus Judge Agent.
 """
 
 class NovaJudgeAgent:
-    def __init__(self, api_key: str = None, model: str = "openai/gpt-oss-120b"):
+    def __init__(self, api_key: str = None, model: str = "llama3-8b-8192"):
         """
         Initializes the Nova Judge Agent.
         Defaults to using the GROQ_API_KEY environment variable if no key is provided.
