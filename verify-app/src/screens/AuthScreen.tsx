@@ -10,13 +10,51 @@ export const AuthScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [skipAnim, setSkipAnim] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const email = formData.get('Email') as string;
+      const password = formData.get('Password') as string;
+      
+      let res;
+      if (mode === 'signup') {
+        const name = formData.get('Name') as string;
+        const confirm = formData.get('Confirm Password') as string;
+        if (password !== confirm) {
+          alert('Passwords do not match');
+          setIsLoading(false);
+          return;
+        }
+        res = await fetch('http://localhost:8000/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+      } else {
+        res = await fetch('http://localhost:8000/api/auth/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || 'Authentication failed');
+      }
+
+      const data = await res.json();
+      localStorage.setItem('verify_token', data.access_token);
+      localStorage.setItem('verify_user', data.user_name);
+      
       dispatch({ type: 'NEXT_STEP' });
-    }, 1500);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formFields = mode === 'signup' 
@@ -60,6 +98,7 @@ export const AuthScreen: React.FC = () => {
             >
               <label className="block text-candy-text font-bold uppercase mb-2 pl-2 text-sm">{field}</label>
               <input 
+                name={field}
                 type={field.includes('Password') ? 'password' : field === 'Email' ? 'email' : 'text'}
                 required
                 className="w-full bg-white/80 border-4 border-white shadow-sm rounded-2xl px-5 py-4 text-candy-text font-bold focus:outline-none focus:bg-white focus:shadow-bubbly transition-all"

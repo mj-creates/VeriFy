@@ -4,3 +4,4 @@ update_gemini.py
 node_modules/
 dist/
 .DS_Store
+backend/verify.db  

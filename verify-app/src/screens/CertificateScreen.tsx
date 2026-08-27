@@ -20,6 +20,27 @@ export const CertificateScreen: React.FC = () => {
     return () => clearTimeout(t);
   }, [skipAnim]);
 
+  useEffect(() => {
+    // Save certificate to backend
+    const saveCert = async () => {
+      try {
+        await fetch('http://localhost:8000/api/certificates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: res.question,
+            final_answer: res.finalAnswer,
+            confidence_score: res.judgment.confidenceScore,
+            trust_explanation: res.trustExplanation
+          })
+        });
+      } catch (e) {
+        console.error("Failed to save certificate:", e);
+      }
+    };
+    saveCert();
+  }, [res]);
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center p-4">
       <motion.div

@@ -7,7 +7,7 @@ def search(query: str, max_results: int = 3) -> str:
     
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
-        return "Error: TAVILY_API_KEY environment variable is missing. Please set it."
+        raise ValueError("TAVILY_API_KEY environment variable is missing. Please set it.")
         
     try:
         response = requests.post(

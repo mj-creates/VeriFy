@@ -35,7 +35,7 @@ class VeriFyOrchestrator:
         
         print("[System] All Agents Successfully Connected and Ready.\n")
 
-    def process_query(self, query: str) -> str:
+    def process_query(self, query: str) -> dict:
         """
         The main pipeline execution:
         Router -> [Research (Vera, Vox, Trace)] -> Judge (Nova) -> Synthesize (Sol)
@@ -50,7 +50,24 @@ class VeriFyOrchestrator:
             print(f"[Quinn] Route: DIRECT. Reason: {route_decision.get('reasoning')}")
             direct_answer = route_decision.get("direct_answer", "No direct answer provided.")
             # For direct facts, we bypass the research pipeline entirely.
-            return f"**Direct Answer:**\n\n{direct_answer}"
+            # Return a dummy VerifyResult structure for consistency
+            return {
+                "question": query,
+                "findings": [
+                    {"agentName": "Vera", "sourceTier": "official", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"},
+                    {"agentName": "Vox", "sourceTier": "news", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"},
+                    {"agentName": "Trace", "sourceTier": "anecdotal", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"}
+                ],
+                "judgment": {
+                    "agreementSummary": route_decision.get("reasoning", "Direct answer provided."),
+                    "confidenceScore": 99,
+                    "breakdown": {"baseScore": 99, "consistencyBonus": 0},
+                    "selectedAnswer": direct_answer,
+                    "needsHumanReview": False
+                },
+                "finalAnswer": direct_answer,
+                "trustExplanation": "Direct factual answer from base model knowledge."
+            }
             
         print(f"[Quinn] Route: RESEARCH. Reason: {route_decision.get('reasoning')}")
         
@@ -75,14 +92,48 @@ class VeriFyOrchestrator:
         print("\n[Sol] Synthesizing final response for the user...")
         sol_response = self.sol.generate_final_response(query, nova_verdict)
         
-        final_markdown = sol_response.get("markdown_response", "")
-        final_conf = sol_response.get("confidence_score", "N/A")
-        conf_level = sol_response.get("confidence_level", "N/A")
-        trust = sol_response.get("trust_explanation", "N/A")
+        # Construct findings
+        def map_finding(agent_name, tier, result):
+            answer = result.get("findings", "No findings.")
+            citations = result.get("citations", [])
+            url = citations[0].get("url", "unknown") if citations else "unknown"
+            recency = citations[0].get("publication_date", "Unknown") if citations else "Unknown"
+            return {
+                "agentName": agent_name,
+                "sourceTier": tier,
+                "answer": answer,
+                "sourceUrl": url,
+                "recency": recency
+            }
+            
+        findings = [
+            map_finding("Vera", "official", vera_result),
+            map_finding("Vox", "news", vox_result),
+            map_finding("Trace", "anecdotal", trace_result)
+        ]
         
-        formatted_response = f"{final_markdown}\n\n---\n**Confidence:** {final_conf}% ({conf_level})\n**Trust Summary:** {trust}"
+        base_score = 80 if nova_verdict.get("evidence_tier_used") == "Official" else (60 if nova_verdict.get("evidence_tier_used") == "News" else 40)
+        confidence = sol_response.get("confidence_score", 0)
+        consistency_bonus = max(0, confidence - base_score)
         
-        return formatted_response
+        judgment = {
+            "agreementSummary": nova_verdict.get("conflict_analysis", ""),
+            "confidenceScore": confidence,
+            "breakdown": {
+                "baseScore": base_score,
+                "consistencyBonus": consistency_bonus
+            },
+            "selectedAnswer": nova_verdict.get("verdict", ""),
+            "needsHumanReview": confidence < 50
+        }
+        
+        return {
+            "question": query,
+            "findings": findings,
+            "judgment": judgment,
+            "finalAnswer": sol_response.get("markdown_response", ""),
+            "trustExplanation": sol_response.get("trust_explanation", "")
+        }
 
 # --- CLI Entry Point ---
 if __name__ == "__main__":

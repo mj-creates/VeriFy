@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { TypewriterText } from '../components/TypewriterText';
 import { useAppContext } from '../AppContext';
 import { CharacterAvatar } from '../components/CharacterAvatar';
-import { mockAgreementResult, mockConflictResult } from '../mockData';
 import clsx from 'clsx';
 import { Check, AlertTriangle, ExternalLink } from 'lucide-react';
+import type { VerifyResult } from '../types';
 
 const agentConfig = {
   Vera: { color: 'bg-[#7BDFF2]', role: 'Official Source', messages: ["Querying official portals...", "Extracting policy docs...", "Verified official status."] },
@@ -23,64 +23,91 @@ export const AgentProcessingScreen: React.FC = () => {
   });
   const [allDone, setAllDone] = useState(false);
   const [hasError, setHasError] = useState(false);
-
-  const findings = state.isMockConflict ? mockConflictResult.findings : mockAgreementResult.findings;
+  const [errorMsg, setErrorMsg] = useState("");
+  const [fetchedResult, setFetchedResult] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
-    if (skipAnim) {
+    // Process backend call
+    const runVerification = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: state.question })
+        });
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        
+        if (data.error) throw new Error(data.error);
+
+        const dynamicResult: VerifyResult = data.response;
+        
+        setFetchedResult(dynamicResult);
+        setAllDone(true);
+      } catch (err: any) {
+        console.error(err);
+        setHasError(true);
+        setErrorMsg(err.message);
+      }
+    };
+    runVerification();
+  }, [state.question]);
+
+  useEffect(() => {
+    if (skipAnim && fetchedResult) {
       setAgentStates({
         Vera: { stage: 2, done: true },
         Vox: { stage: 2, done: true },
         Trace: { stage: 2, done: true }
       });
-      setAllDone(true);
       return;
     }
 
-    ['Vera', 'Vox', 'Trace'].forEach((agent, i) => {
-      setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { stage: 1, done: false } })), 1500 + i * 400);
-      setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { stage: 2, done: true } })), 4000 + i * 500);
-    });
-
-    const timeout = setTimeout(() => {
-      setAllDone(true);
-    }, 6000);
-
-    const errTimeout = setTimeout(() => {
-      if (!allDone) setHasError(true);
-    }, 8000);
-
-    return () => { clearTimeout(timeout); clearTimeout(errTimeout); };
-  }, [skipAnim, allDone]);
+    if (fetchedResult) {
+      ['Vera', 'Vox', 'Trace'].forEach((agent, i) => {
+        setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { stage: 1, done: false } })), 1500 + i * 400);
+        setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { stage: 2, done: true } })), 4000 + i * 500);
+      });
+    }
+  }, [skipAnim, fetchedResult]);
 
   useEffect(() => {
-    if (allDone) {
+    if (allDone && fetchedResult) {
       const t = setTimeout(() => {
         dispatch({ 
           type: 'SET_RESULT', 
-          payload: state.isMockConflict ? mockConflictResult : mockAgreementResult 
+          payload: fetchedResult
         });
         dispatch({ type: 'NEXT_STEP' });
-      }, 2000);
+      }, 6000);
       return () => clearTimeout(t);
     }
-  }, [allDone, dispatch, state.isMockConflict]);
+  }, [allDone, fetchedResult, dispatch]);
 
   if (hasError) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4 text-candy-text">
         <AlertTriangle className="w-24 h-24 text-[#FF9AA2]" strokeWidth={3} />
         <h2 className="text-4xl font-black uppercase title-stroke drop-shadow-md text-[#FF9AA2]">Oops! Agent failed.</h2>
+        <p className="text-lg font-bold text-red-500 max-w-lg text-center bg-white p-4 rounded-xl shadow-sm border-2 border-red-200">{errorMsg}</p>
         <button onClick={() => dispatch({ type: 'GO_TO_STEP', payload: 3 })} className="px-10 py-4 bg-white candy-button mt-6 text-candy-text">Retry</button>
       </div>
     );
   }
 
+  const dummyFindings = [
+    { agentName: 'Vera', sourceUrl: '...', answer: 'Processing...' },
+    { agentName: 'Vox', sourceUrl: '...', answer: 'Processing...' },
+    { agentName: 'Trace', sourceUrl: '...', answer: 'Processing...' }
+  ];
+
+  const renderFindings = fetchedResult ? fetchedResult.findings : dummyFindings;
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
       <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8 justify-center items-stretch relative z-10">
-        {findings.map((f, i) => {
-          const config = agentConfig[f.agentName];
+        {renderFindings.map((f, i) => {
+          const config = agentConfig[f.agentName as keyof typeof agentConfig];
           const st = agentStates[f.agentName];
           const isDone = st.done;
 
