@@ -25,22 +25,13 @@ except ImportError as e:
     print("Ensure the agent-core directory exists and contains orchestrator.py")
     sys.exit(1)
 
-app = FastAPI(title="VeriFy API", description="Backend for the VeriFy AI Agent System")
-
-# Enable CORS so the frontend (React/Vue/etc.) can communicate with this API
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # NOTE: For production, change this to your specific frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Global orchestrator instance (initialized on startup)
 orchestrator = None
 
-@app.on_event("startup")
-def startup_event():
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global orchestrator
     try:
         # This will look for GROQ_API_KEY in the environment
@@ -52,6 +43,20 @@ def startup_event():
     except Exception as e:
         print(f"Warning: Orchestrator failed to initialize on startup: {e}")
         print("Please ensure GROQ_API_KEY is set in your environment variables.")
+    yield
+    # Cleanup code could go here
+
+app = FastAPI(title="VeriFy API", description="Backend for the VeriFy AI Agent System", lifespan=lifespan)
+
+# Enable CORS so the frontend (React/Vue/etc.) can communicate with this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # NOTE: For production, change this to your specific frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # --- API Models ---
 class UserCreate(BaseModel):
@@ -104,8 +109,31 @@ def signin(user: UserLogin, db: Session = Depends(get_db)):
     access_token = auth.create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer", "user_name": db_user.name}
 
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHeader
+from fastapi import Security
+
+security = HTTPBearer()
+api_key_header = APIKeyHeader(name="X-API-Key")
+STATIC_API_KEY = "verify-secret-static-key-2024"
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    token = credentials.credentials
+    payload = auth.decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    email = payload.get("sub")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+def verify_api_key(api_key: str = Security(api_key_header)):
+    if api_key != STATIC_API_KEY:
+        raise HTTPException(status_code=403, detail="Could not validate credentials")
+    return api_key
+
 @app.post("/api/verify", response_model=QueryResponse)
-def verify_claim(request: QueryRequest):
+def verify_claim(request: QueryRequest, api_key: str = Security(verify_api_key)):
     global orchestrator
     
     if not orchestrator:
@@ -136,14 +164,14 @@ class CertificateCreate(BaseModel):
     trust_explanation: str
 
 @app.post("/api/certificates")
-def create_certificate(cert: CertificateCreate, db: Session = Depends(get_db)):
+def create_certificate(cert: CertificateCreate, db: Session = Depends(get_db), api_key: str = Security(verify_api_key)):
     import uuid
     from datetime import datetime
     
     cert_id = str(uuid.uuid4())
     new_cert = models.Certificate(
         id=cert_id,
-        user_id=0, # Anonymous or link to user if we extract token
+        user_id=0,
         question=cert.question,
         final_answer=cert.final_answer,
         confidence_score=cert.confidence_score,

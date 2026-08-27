@@ -8,12 +8,12 @@ interface CharacterAvatarProps {
 }
 
 const colorMap = {
-  Vera: "bg-agent-vera",
-  Vox: "bg-agent-vox",
-  Trace: "bg-agent-trace",
-  Nova: "bg-agent-nova",
-  Sol: "bg-agent-sol",
-  Quinn: "bg-agent-quinn",
+  Vera: "bg-neo-blue",
+  Vox: "bg-neo-pink",
+  Trace: "bg-neo-yellow",
+  Nova: "bg-neo-purple",
+  Sol: "bg-neo-green",
+  Quinn: "bg-neo-orange",
 };
 
 export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ name, className }) => {
@@ -21,7 +21,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ name, classNam
 
   if (hasError) {
     return (
-      <div className={clsx(`flex items-center justify-center rounded-full text-white font-black text-4xl border-4 border-white shadow-sm ${colorMap[name]}`, className)} style={{ WebkitTextStroke: '2px white' }}>
+      <div className={clsx(`flex items-center justify-center rounded-full text-neo-black font-space font-bold text-4xl border-[4px] border-neo-black shadow-neo ${colorMap[name]}`, className)}>
         {name.charAt(0)}
       </div>
     );

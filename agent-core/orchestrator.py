@@ -72,13 +72,18 @@ class VeriFyOrchestrator:
         print(f"[Quinn] Route: RESEARCH. Reason: {route_decision.get('reasoning')}")
         
         # 2. Parallel Research Phase
-        print("\n[System] Dispatching Research Agents Sequentially...")
+        print("\n[System] Dispatching Research Agents Concurrently...")
         research_outputs = []
         
-        # Execute the three researchers sequentially to avoid LLM rate limits
-        vera_result = self.vera.execute_research(query)
-        vox_result = self.vox.execute_research(query)
-        trace_result = self.trace.execute_research(query)
+        # Execute the three researchers concurrently using ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_vera = executor.submit(self.vera.execute_research, query)
+            future_vox = executor.submit(self.vox.execute_research, query)
+            future_trace = executor.submit(self.trace.execute_research, query)
+            
+            vera_result = future_vera.result()
+            vox_result = future_vox.result()
+            trace_result = future_trace.result()
         
         research_outputs = [vera_result, vox_result, trace_result]
             

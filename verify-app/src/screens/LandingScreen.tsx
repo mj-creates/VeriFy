@@ -1,117 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { TypewriterText } from '../components/TypewriterText';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { useAppContext } from '../AppContext';
-import { Sparkles, Cloud } from 'lucide-react';
-
-const generateFloatingClouds = (count: number) => {
-  return Array.from({ length: count }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 40 + 40,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    duration: Math.random() * 4 + 4,
-    delay: Math.random() * 3,
-    color: ['text-white', 'text-agent-vera', 'text-agent-trace'][Math.floor(Math.random() * 3)],
-    opacity: Math.random() * 0.4 + 0.4
-  }));
-};
+import { ShieldCheck } from 'lucide-react';
 
 export const LandingScreen: React.FC = () => {
   const { dispatch } = useAppContext();
-  const [phase, setPhase] = useState<'typing' | 'holding' | 'exiting' | 'resolved'>('typing');
-  const [clouds] = useState(() => generateFloatingClouds(12));
-  const shouldReduceMotion = useReducedMotion();
-
-  useEffect(() => {
-    if (phase === 'holding') {
-      const t = setTimeout(() => setPhase('exiting'), 1500);
-      return () => clearTimeout(t);
-    }
-    if (phase === 'exiting') {
-      const t = setTimeout(() => setPhase('resolved'), 600);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
-
-  const handleSkip = () => setPhase('resolved');
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
-      {/* Floating Kawaii Clouds */}
-      {phase !== 'resolved' && !shouldReduceMotion && clouds.map(c => (
-        <motion.div
-          key={c.id}
-          className={`absolute ${c.color}`}
-          style={{ left: `${c.x}%`, top: `${c.y}%`, opacity: c.opacity }}
-          animate={phase === 'exiting' ? { scale: 0, opacity: 0 } : {
-            y: ['-20px', '20px', '-20px'],
-          }}
-          transition={phase === 'exiting' ? { duration: 0.6 } : {
-            duration: c.duration,
-            repeat: Infinity,
-            delay: c.delay,
-            ease: 'easeInOut'
-          }}
+    <div className="relative flex flex-col items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-neo-bg">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-4xl flex flex-col items-center text-center relative z-10"
+      >
+        <div className="bg-neo-yellow px-6 py-2 border-4 border-neo-black shadow-neo rounded-full mb-8 rotate-[-2deg]">
+          <span className="font-space font-bold uppercase tracking-widest text-neo-black text-sm md:text-base">Beta v2.0 Available</span>
+        </div>
+
+        <h1 className="text-7xl md:text-9xl font-black font-space text-neo-black mb-8 leading-none drop-shadow-[6px_6px_0_rgba(17,17,17,1)]">
+          VERIFY.
+        </h1>
+
+        <div className="bg-neo-blue/10 border-4 border-neo-black p-6 md:p-8 rounded-xl shadow-neo max-w-2xl mx-auto mb-12">
+          <p className="text-xl md:text-3xl font-display font-bold text-neo-black leading-relaxed">
+            The multi-agent truth engine. No fluff, just hard facts.
+          </p>
+        </div>
+
+        <button
+          onClick={() => dispatch({ type: 'NEXT_STEP' })}
+          className="group relative flex items-center gap-4 bg-neo-pink text-neo-black px-12 py-6 text-2xl font-space font-bold uppercase tracking-widest border-4 border-neo-black rounded-xl shadow-neo hover:-translate-y-1 hover:shadow-neo-lg active:translate-y-1 active:translate-x-1 active:shadow-neo-active transition-all"
         >
-          <Cloud size={c.size} fill="currentColor" strokeWidth={0} />
-        </motion.div>
-      ))}
-
-      <div className="z-10 flex flex-col items-center text-center">
-        {(phase === 'typing' || phase === 'holding' || phase === 'exiting') && (
-          <motion.div
-            animate={phase === 'exiting' ? { opacity: 0, scale: 1.2, filter: 'blur(10px)' } : {}}
-            transition={{ type: "spring", bounce: 0.4, duration: 0.8 }}
-            className="text-6xl md:text-8xl font-black text-[#FF9AA2] title-stroke drop-shadow-xl"
-          >
-            <TypewriterText 
-              text="Verify" 
-              delay={90} 
-              onComplete={() => setPhase('holding')} 
-              cursorColor="bg-[#FF9AA2]"
-            />
-          </motion.div>
-        )}
-
-        {phase === 'resolved' && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 30 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
-            className="flex flex-col items-center"
-          >
-            <div className="relative mb-6">
-              <h1 className="text-7xl md:text-9xl font-black text-[#FFB7B2] tracking-tighter relative z-10 title-stroke drop-shadow-[0_10px_10px_rgba(255,183,178,0.5)]">
-                VeriFY
-              </h1>
-              <Sparkles className="w-16 h-16 text-[#FFDAC1] absolute -top-8 -right-8 animate-pulse-soft z-20 drop-shadow-md" strokeWidth={3} fill="#FFDAC1" />
-            </div>
-            
-            <div className="bg-white/80 backdrop-blur-sm border-[4px] border-white px-8 py-4 rounded-[2rem] shadow-bubbly mt-2">
-              <p className="text-xl md:text-2xl font-bold text-candy-text">
-                Multi-agent verification for student claims! ✨
-              </p>
-            </div>
-
-            <motion.button
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4, type: "spring", bounce: 0.6 }}
-              onClick={() => dispatch({ type: 'NEXT_STEP' })}
-              className="mt-12 px-12 py-5 text-2xl bg-[#7BDFF2] candy-button-color title-stroke"
-            >
-              Get Started!
-            </motion.button>
-          </motion.div>
-        )}
-      </div>
-
-      {phase !== 'resolved' && (
-        <button onClick={handleSkip} className="absolute bottom-8 right-8 text-candy-text font-bold text-sm uppercase tracking-widest z-50 bg-white/80 border-4 border-white px-5 py-3 rounded-full shadow-bubbly hover:bg-white transition-all">
-          Skip intro
+          <span>Start Verification</span>
+          <ShieldCheck className="w-8 h-8 group-hover:rotate-12 transition-transform" strokeWidth={3} />
         </button>
-      )}
+      </motion.div>
+      
+      {/* Decorative Neo-Brutalist elements */}
+      <div className="absolute top-10 left-10 w-24 h-24 bg-neo-green border-4 border-neo-black rounded-full shadow-neo hidden md:block"></div>
+      <div className="absolute bottom-20 right-10 w-32 h-32 bg-neo-purple border-4 border-neo-black rounded-xl shadow-neo hidden md:block rotate-12"></div>
     </div>
   );
 };

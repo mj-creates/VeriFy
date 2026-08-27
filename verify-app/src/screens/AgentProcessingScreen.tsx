@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TypewriterText } from '../components/TypewriterText';
 import { useAppContext } from '../AppContext';
 import { CharacterAvatar } from '../components/CharacterAvatar';
 import clsx from 'clsx';
-import { Check, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Check, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import type { VerifyResult } from '../types';
 
 const agentConfig = {
-  Vera: { color: 'bg-[#7BDFF2]', role: 'Official Source', messages: ["Querying official portals...", "Extracting policy docs...", "Verified official status."] },
-  Vox: { color: 'bg-[#FF9AA2]', role: 'News Source', messages: ["Scanning news sites...", "Cross-checking articles...", "News consensus found."] },
-  Trace: { color: 'bg-[#B5EAD7]', role: 'Secondary Source', messages: ["Scanning forums...", "Checking social media...", "Anecdotal evidence compiled."] },
+  Vera: { color: 'bg-neo-blue', role: 'Official Source' },
+  Vox: { color: 'bg-neo-pink', role: 'News Source' },
+  Trace: { color: 'bg-neo-yellow', role: 'Secondary Source' },
 };
 
 export const AgentProcessingScreen: React.FC = () => {
   const { state, dispatch } = useAppContext();
-  const [skipAnim, setSkipAnim] = useState(false);
-  const [agentStates, setAgentStates] = useState<Record<string, { stage: number, done: boolean }>>({
-    Vera: { stage: 0, done: false },
-    Vox: { stage: 0, done: false },
-    Trace: { stage: 0, done: false }
+  const [agentStates, setAgentStates] = useState<Record<string, { done: boolean }>>({
+    Vera: { done: false },
+    Vox: { done: false },
+    Trace: { done: false }
   });
   const [allDone, setAllDone] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -27,23 +25,21 @@ export const AgentProcessingScreen: React.FC = () => {
   const [fetchedResult, setFetchedResult] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
-    // Process backend call
     const runVerification = async () => {
       try {
         const res = await fetch('http://localhost:8000/api/verify', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-API-Key': 'verify-secret-static-key-2024'
+          },
           body: JSON.stringify({ query: state.question })
         });
         if (!res.ok) throw new Error('API Error');
         const data = await res.json();
-        
         if (data.error) throw new Error(data.error);
 
-        const dynamicResult: VerifyResult = data.response;
-        
-        setFetchedResult(dynamicResult);
-        setAllDone(true);
+        setFetchedResult(data.response);
       } catch (err: any) {
         console.error(err);
         setHasError(true);
@@ -54,43 +50,33 @@ export const AgentProcessingScreen: React.FC = () => {
   }, [state.question]);
 
   useEffect(() => {
-    if (skipAnim && fetchedResult) {
-      setAgentStates({
-        Vera: { stage: 2, done: true },
-        Vox: { stage: 2, done: true },
-        Trace: { stage: 2, done: true }
-      });
-      return;
-    }
-
     if (fetchedResult) {
       ['Vera', 'Vox', 'Trace'].forEach((agent, i) => {
-        setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { stage: 1, done: false } })), 1500 + i * 400);
-        setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { stage: 2, done: true } })), 4000 + i * 500);
+        setTimeout(() => setAgentStates(prev => ({ ...prev, [agent]: { done: true } })), 1000 + i * 800);
       });
+      setTimeout(() => setAllDone(true), 3500);
     }
-  }, [skipAnim, fetchedResult]);
+  }, [fetchedResult]);
 
   useEffect(() => {
     if (allDone && fetchedResult) {
       const t = setTimeout(() => {
-        dispatch({ 
-          type: 'SET_RESULT', 
-          payload: fetchedResult
-        });
+        dispatch({ type: 'SET_RESULT', payload: fetchedResult });
         dispatch({ type: 'NEXT_STEP' });
-      }, 6000);
+      }, 1500);
       return () => clearTimeout(t);
     }
   }, [allDone, fetchedResult, dispatch]);
 
   if (hasError) {
     return (
-      <div className="min-h-screen flex items-center justify-center flex-col gap-4 text-candy-text">
-        <AlertTriangle className="w-24 h-24 text-[#FF9AA2]" strokeWidth={3} />
-        <h2 className="text-4xl font-black uppercase title-stroke drop-shadow-md text-[#FF9AA2]">Oops! Agent failed.</h2>
-        <p className="text-lg font-bold text-red-500 max-w-lg text-center bg-white p-4 rounded-xl shadow-sm border-2 border-red-200">{errorMsg}</p>
-        <button onClick={() => dispatch({ type: 'GO_TO_STEP', payload: 3 })} className="px-10 py-4 bg-white candy-button mt-6 text-candy-text">Retry</button>
+      <div className="min-h-screen flex items-center justify-center flex-col gap-6 bg-neo-bg">
+        <div className="neo-panel bg-neo-pink p-12 text-center max-w-xl">
+          <AlertTriangle className="w-24 h-24 text-neo-black mx-auto mb-6" strokeWidth={3} />
+          <h2 className="text-4xl font-black font-space text-neo-black uppercase mb-4">Error</h2>
+          <p className="text-xl font-bold text-neo-black mb-8 border-4 border-neo-black bg-white p-4 shadow-neo">{errorMsg}</p>
+          <button onClick={() => dispatch({ type: 'GO_TO_STEP', payload: 2 })} className="neo-button bg-white px-10 py-4 w-full">Retry</button>
+        </div>
       </div>
     );
   }
@@ -104,68 +90,56 @@ export const AgentProcessingScreen: React.FC = () => {
   const renderFindings = fetchedResult ? fetchedResult.findings : dummyFindings;
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
-      <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8 justify-center items-stretch relative z-10">
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-neo-bg">
+      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
         {renderFindings.map((f, i) => {
           const config = agentConfig[f.agentName as keyof typeof agentConfig];
-          const st = agentStates[f.agentName];
-          const isDone = st.done;
+          const isDone = agentStates[f.agentName].done;
 
           return (
             <motion.div
               key={f.agentName}
-              initial={skipAnim ? {} : { opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: skipAnim ? 0 : i * 0.2, type: 'spring', bounce: 0.5 }}
+              transition={{ delay: i * 0.2 }}
               className={clsx(
-                "flex-1 candy-panel p-8 flex flex-col items-center relative transition-all duration-700",
-                isDone ? config.color : "bg-white/80"
+                "neo-panel p-8 flex flex-col items-center transition-all duration-500 min-h-[400px]",
+                isDone ? config.color : "bg-white"
               )}
             >
-              <div className="bg-white/90 border-[6px] border-white rounded-[2.5rem] w-36 h-36 flex items-center justify-center mb-6 shadow-sm overflow-hidden p-2">
-                <CharacterAvatar name={f.agentName} className="w-full h-full object-contain hover:scale-110 transition-transform" />
-              </div>
+              <CharacterAvatar name={f.agentName as "Vera" | "Vox" | "Trace"} className="w-24 h-24 object-contain mb-4" />
               
-              <h3 className="text-4xl font-black uppercase mb-2 title-stroke drop-shadow-sm" style={{ color: isDone ? 'white' : 'var(--tw-colors-candy-text)' }}>
+              <h3 className="text-3xl font-black font-space text-neo-black uppercase mb-2">
                 {f.agentName}
               </h3>
-              <div className="text-sm font-bold uppercase tracking-widest mb-8 bg-white/90 text-candy-text px-4 py-2 rounded-full border-2 border-white shadow-sm">
+              <div className="text-xs font-bold uppercase tracking-widest mb-8 bg-neo-black text-white px-3 py-1">
                 {config.role}
               </div>
 
               {!isDone ? (
-                <div className="flex flex-col items-center w-full mt-auto bg-white/60 border-4 border-white p-6 rounded-[2rem] shadow-sm">
-                  <div className="h-[40px] text-center text-sm font-bold text-candy-text uppercase tracking-wide">
-                    <TypewriterText key={st.stage} text={config.messages[st.stage]} cursorColor="bg-candy-text" />
-                  </div>
-                  <div className="mt-4 w-12 h-12 border-[6px] border-white/50 rounded-full border-t-white animate-spin shadow-sm" />
+                <div className="flex flex-col items-center justify-center w-full mt-auto flex-1">
+                  <Loader2 className="w-12 h-12 text-neo-black animate-spin" strokeWidth={4} />
+                  <p className="mt-4 font-space font-bold text-neo-black uppercase">Researching...</p>
                 </div>
               ) : (
                 <motion.div 
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", bounce: 0.6 }}
-                  className="mt-auto w-full flex flex-col items-center text-center bg-white/95 rounded-[2rem] p-6 border-4 border-white shadow-bubbly relative"
+                  className="mt-auto w-full flex flex-col items-start bg-white border-4 border-neo-black p-4 shadow-neo relative"
                 >
-                  <div className="absolute -top-6 -right-6 w-14 h-14 bg-[#B5EAD7] rounded-full border-4 border-white flex items-center justify-center shadow-sm">
-                    <Check className="w-8 h-8 text-white" strokeWidth={4} />
+                  <div className="absolute -top-5 -right-5 w-10 h-10 bg-neo-green border-4 border-neo-black flex items-center justify-center shadow-neo">
+                    <Check className="w-6 h-6 text-neo-black" strokeWidth={4} />
                   </div>
-                  <span className="text-xs font-black uppercase bg-[#F4F4F4] text-candy-text px-3 py-1.5 rounded-full mb-4 inline-flex items-center gap-2 border-2 border-white">
-                    <ExternalLink className="w-4 h-4" /> {f.sourceUrl}
-                  </span>
-                  <p className="text-base font-bold text-candy-text leading-relaxed">"{f.answer}"</p>
+                  <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold font-space uppercase text-neo-black flex items-center gap-2 mb-3 hover:underline">
+                    <ExternalLink className="w-4 h-4" /> {f.sourceUrl.substring(0, 30)}...
+                  </a>
+                  <p className="text-sm font-bold text-neo-black font-display leading-relaxed line-clamp-4">"{f.answer}"</p>
                 </motion.div>
               )}
             </motion.div>
           );
         })}
       </div>
-
-      {!skipAnim && (
-        <button onClick={() => setSkipAnim(true)} className="absolute bottom-8 right-8 text-candy-text font-bold text-sm uppercase tracking-widest z-50 bg-white/80 border-4 border-white px-5 py-3 rounded-full shadow-bubbly hover:bg-white transition-all">
-          Skip animation
-        </button>
-      )}
     </div>
   );
 };
