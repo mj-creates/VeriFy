@@ -18,7 +18,6 @@ const colorMap = {
 
 export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ name, className }) => {
   const [hasError, setHasError] = useState(false);
-  const lowerName = name.toLowerCase();
 
   if (hasError) {
     return (
