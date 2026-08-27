@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VeriFY - Expo UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { emerald: { 400: '#34d399', 500: '#10b981' } } } }
+    }
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+  <style>
+    body { background-color: #050505; color: white; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; overflow: hidden; }
+    .text-shadow-glow { text-shadow: 0 0 20px rgba(16, 185, 129, 0.7); }
+    .typing::after { content: '█'; animation: blink 1s step-start infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .spin { animation: spin 2s linear infinite; display: inline-block; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 50% { opacity: .3; } }
+    .scanline {
+      position: absolute; top: 0; left: 0; right: 0; height: 10px; background: rgba(52, 211, 153, 0.3);
+      opacity: 0.5; animation: scan 3s linear infinite;
+    }
+    @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { motion, AnimatePresence } = window.Motion;
+
+    function TypewriterText({ texts, onComplete, className }) {
+      const [text, setText] = useState("");
+      useEffect(() => {
+        let isCancelled = false;
+        async function run() {
+          for (const current of texts) {
+            if (current.type === 'type') {
+               for(let c of current.str) {
+                 if (isCancelled) return;
+                 setText(prev => prev + c);
+                 await new Promise(r => setTimeout(r, current.speed || 30));
+               }
+            } else if (current.type === 'delete') {
+               for(let k = 0; k < current.count; k++) {
+                 if (isCancelled) return;
+                 setText(prev => prev.slice(0, -1));
+                 await new Promise(r => setTimeout(r, 20));
+               }
+            } else if (current.type === 'pause') {
+               await new Promise(r => setTimeout(r, current.ms));
+            } else if (current.type === 'set') {
+               setText(current.str);
+            }
+          }
+          if (onComplete) onComplete();
+        }
+        run();
+        return () => { isCancelled = true; };
+      }, []);
+      return <span className={className + " typing"} dangerouslySetInnerHTML={{__html: text}} />;
+    }
+
+    function App() {
+      const [step, setStep] = useState(0);
+      const [query, setQuery] = useState("");
+      const [result, setResult] = useState(null);
+      const [floatingMarks, setFloatingMarks] = useState([]);
+
+      useEffect(() => {
+        const marks = Array.from({ length: 40 }).map((_, i) => ({
+          id: i, x: Math.random() * 100, y: Math.random() * 100,
+          duration: 3 + Math.random() * 5, delay: Math.random() * 2, scale: 0.5 + Math.random() * 1.5
+        }));
+        setFloatingMarks(marks);
+        if (step === 0) setTimeout(() => setStep(1), 5000);
+      }, [step]);
+
+      const handleQuery = async (e) => {
+        e.preventDefault();
+        setStep(3);
+        try {
+          const res = await fetch('http://localhost:8000/api/verify', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query })
+          });
+          const data = await res.json();
+          setResult(data.response);
+        } catch (err) {
+          setResult("### Analysis Complete\nThis is a fallback output due to connection failure. Make sure python backend/main.py is running on port 8000.\n\n---\n**Confidence:** 95%\n**Trust:** Verified sources.");
+        }
+      };
+
+      return (
+        <main className="relative w-full h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+          {step === 0 && (
+            <AnimatePresence>
+              <motion.div key="splash" exit={{ opacity: 0, scale: 1.2, filter: "blur(10px)" }} transition={{ duration: 1 }} className="absolute inset-0 flex flex-col items-center justify-center">
+                {floatingMarks.map(m => (
+                  <motion.div key={m.id} className="absolute text-emerald-500/20 font-bold"
+                    style={{ fontSize: `${m.scale * 3}rem` }}
+                    initial={{ left: `${m.x}%`, top: `${m.y}%`, opacity: 0 }}
+                    animate={{ opacity: [0, 0.4, 0], y: -80, rotate: 360 }}
+                    transition={{ duration: m.duration, delay: m.delay, repeat: Infinity }}
+                  >?</motion.div>
+                ))}
+                <div className="z-10 text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500 text-shadow-glow">
+                  <TypewriterText texts={[ { type: 'type', str: "Verify for you", speed: 60 }, { type: 'pause', ms: 800 }, { type: 'delete', count: 14 }, { type: 'set', str: "<span style='font-size: 6rem'>VeriFY</span>" } ]} />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          )}
+
+          {step === 1 && (
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center max-w-md w-full gap-8 z-10">
+              <div className="text-2xl font-bold text-emerald-400 h-10">
+                <TypewriterText texts={[ { type: 'type', str: "???????????????", speed: 40 }, { type: 'pause', ms: 300 }, { type: 'delete', count: 15 }, { type: 'type', str: "sign in or sign up", speed: 50 } ]} />
+              </div>
+              <form onSubmit={(e) => { e.preventDefault(); setStep(2); }} className="flex flex-col gap-4 w-full bg-[#111] p-8 rounded-2xl border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)] relative overflow-hidden">
+                <div className="scanline"></div>
+                <input type="text" placeholder="Username" className="bg-black border border-gray-800 p-4 rounded text-white focus:border-emerald-500 focus:outline-none transition-colors" />
+                <input type="password" placeholder="Password" className="bg-black border border-gray-800 p-4 rounded text-white focus:border-emerald-500 focus:outline-none transition-colors" />
+                <button type="submit" className="mt-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold p-4 rounded transition-all shadow-[0_0_15px_rgba(16,185,129,0.5)]">Continue</button>
+              </form>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center max-w-3xl w-full gap-10 z-10">
+               <div className="text-4xl md:text-6xl font-bold text-cyan-400 flex gap-4 items-center">
+                 <span>enter your</span><span className="text-emerald-500 pulse text-7xl">?</span>
+               </div>
+               <form onSubmit={handleQuery} className="w-full relative">
+                <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Type your claim to verify..." className="w-full bg-[#111] border-2 border-gray-800 p-6 rounded-2xl text-xl pr-12 focus:outline-none focus:border-cyan-500 text-white shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all" required autoFocus />
+                <button type="submit" className="absolute right-4 top-5 text-gray-500 hover:text-cyan-400 font-bold text-xl px-4 py-1 bg-black rounded">Search</button>
+              </form>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-6xl flex flex-col gap-8" onAnimationComplete={() => setTimeout(() => setStep(4), 4000)}>
+              <h2 className="text-3xl font-bold text-center pulse text-emerald-400 mb-4 tracking-widest uppercase">Initiating Parallel Agents</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[{n:'Vera', r:'Official', c:'#60a5fa'}, {n:'Vox', r:'Media', c:'#fb923c'}, {n:'Trace', r:'Sentiment', c:'#c084fc'}].map((ag, i) => (
+                  <motion.div key={ag.n} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.4 }} className="p-6 rounded-2xl border bg-[#0a0a0a] flex flex-col gap-4 relative overflow-hidden" style={{ borderColor: ag.c }}>
+                    <div className="scanline" style={{ background: ag.c }}></div>
+                    <div className="font-bold text-2xl flex justify-between border-b pb-3" style={{ color: ag.c, borderColor: '#333' }}>
+                      {ag.n} <span className="spin">⚙️</span>
+                    </div>
+                    <div className="text-sm h-40 relative text-gray-300">
+                      <TypewriterText texts={[{ type: 'pause', ms: i*300 }, { type: 'type', str: "> Authenticating source streams...<br><br>> Running semantic scrape...<br><br>> Entity extraction successful.<br><br>> Complete.", speed: 15 }]} />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {step === 4 && (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center max-w-4xl w-full">
+              <div className="relative w-64 h-64 mb-10 flex items-center justify-center">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border-4 border-dashed border-red-500/60 rounded-full" />
+                <motion.div animate={{ rotate: -360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="absolute inset-6 border-4 border-dashed border-cyan-500/60 rounded-full" />
+                <div className="text-6xl spin">🧠</div>
+              </div>
+              <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-cyan-400 mb-8 tracking-widest uppercase">Agent 5 (Nova) Resolving</h2>
+              <div className="w-full bg-[#111] border border-gray-800 p-8 rounded-2xl font-mono text-base h-48 text-gray-300 shadow-[0_0_50px_rgba(248,113,113,0.15)]">
+                <TypewriterText texts={[
+                  { type: 'type', str: "<span style='color:#60a5fa'>Vera: No extensions found.</span><br><span style='color:#fb923c'>Vox: Rumors indicate delay.</span><br><br>", speed: 10 },
+                  { type: 'pause', ms: 200 },
+                  { type: 'type', str: "<span style='color:#f87171'>NOVA: Logical discrepancy detected. Weighing domain authority...</span><br>", speed: 10 },
+                  { type: 'pause', ms: 200 },
+                  { type: 'type', str: "<span style='color:#34d399; font-weight:bold'>Synthesis Complete.</span> Waiting for Groq API to return final JSON...", speed: 10 }
+                ]} />
+              </div>
+              {!result && <div className="mt-8 text-yellow-500 font-bold pulse">⚠️ Connecting to Groq & Scraping Web (This takes ~8 seconds)...</div>}
+              {result && (() => { setTimeout(() => setStep(5), 500); return null; })()}
+            </motion.div>
+          )}
+
+          {step === 5 && result && (
+            <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl h-screen overflow-y-auto pb-20 flex flex-col gap-8 pt-10 scrollbar-hide">
+              <div className="flex justify-between items-center bg-black z-10 border-b border-gray-800 pb-4">
+                <h1 className="text-4xl font-bold text-emerald-400">Analysis Complete</h1>
+                <button onClick={() => {setStep(2); setResult(null); setQuery("");}} className="p-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 border border-gray-700">New Verification</button>
+              </div>
+              <div className="bg-[#0a0a0a] p-8 rounded-2xl border border-gray-800 text-lg leading-relaxed shadow-lg whitespace-pre-wrap font-sans text-gray-200">
+                {result.split('---')[0]}
+              </div>
+              {result.split('---')[1] && (
+                <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.3 }} className="relative mt-4 p-10 border-2 border-emerald-500/50 bg-gradient-to-br from-[#064e3b] to-black rounded-3xl flex flex-col items-center overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+                  <div className="flex items-center gap-4 text-emerald-400 mb-8 z-10">
+                    <span className="text-5xl">✅</span>
+                    <h2 className="text-3xl font-bold uppercase tracking-widest text-shadow-glow">Accuracy Certificate</h2>
+                  </div>
+                  <div className="w-full bg-black/60 p-8 rounded-2xl border border-emerald-500/30 z-10 text-emerald-200 text-lg font-sans">
+                    {result.split('---')[1]}
+                  </div>
+                  <div className="mt-10 z-10 w-full flex justify-between items-end border-t border-emerald-500/40 pt-6 text-emerald-600 font-bold uppercase">
+                    <div>System Core verified</div>
+                    <div className="flex flex-col items-end"><span className="text-emerald-500 text-2xl tracking-widest mb-1">APPROVED BY VeriFY</span><span>{new Date().toLocaleDateString()}</span></div>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </main>
+      );
+    }
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

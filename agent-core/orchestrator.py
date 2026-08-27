@@ -13,13 +13,13 @@ from nova_judge import NovaJudgeAgent
 from sol_synthesis import SolSynthesisAgent
 
 class VeriFyOrchestrator:
-    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str = None, model: str = "openai/gpt-oss-120b"):
         """
         Initializes the entire VeriFy pipeline and connects all sub-agents.
         """
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.api_key = api_key or os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is missing. Please set it.")
+            raise ValueError("GROQ_API_KEY environment variable is missing. Please set it.")
             
         self.model = model
         
@@ -55,21 +55,15 @@ class VeriFyOrchestrator:
         print(f"[Quinn] Route: RESEARCH. Reason: {route_decision.get('reasoning')}")
         
         # 2. Parallel Research Phase
-        print("\n[System] Dispatching Research Agents Concurrently...")
+        print("\n[System] Dispatching Research Agents Sequentially...")
         research_outputs = []
         
-        # Execute the three researchers at the same time using a ThreadPool
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            future_vera = executor.submit(self.vera.execute_research, query)
-            future_vox = executor.submit(self.vox.execute_research, query)
-            future_trace = executor.submit(self.trace.execute_research, query)
-            
-            # Await and collect results
-            vera_result = future_vera.result()
-            vox_result = future_vox.result()
-            trace_result = future_trace.result()
-            
-            research_outputs = [vera_result, vox_result, trace_result]
+        # Execute the three researchers sequentially to avoid LLM rate limits
+        vera_result = self.vera.execute_research(query)
+        vox_result = self.vox.execute_research(query)
+        trace_result = self.trace.execute_research(query)
+        
+        research_outputs = [vera_result, vox_result, trace_result]
             
         print("[System] Research Phase Complete.")
         
@@ -79,18 +73,25 @@ class VeriFyOrchestrator:
         
         # 4. Final Synthesis Phase
         print("\n[Sol] Synthesizing final response for the user...")
-        final_markdown = self.sol.generate_final_response(query, nova_verdict)
+        sol_response = self.sol.generate_final_response(query, nova_verdict)
         
-        return final_markdown
+        final_markdown = sol_response.get("markdown_response", "")
+        final_conf = sol_response.get("confidence_score", "N/A")
+        conf_level = sol_response.get("confidence_level", "N/A")
+        trust = sol_response.get("trust_explanation", "N/A")
+        
+        formatted_response = f"{final_markdown}\n\n---\n**Confidence:** {final_conf}% ({conf_level})\n**Trust Summary:** {trust}"
+        
+        return formatted_response
 
 # --- CLI Entry Point ---
 if __name__ == "__main__":
     import sys
     
-    if not os.getenv("GEMINI_API_KEY"):
-        print("CRITICAL: GEMINI_API_KEY environment variable is not set.")
-        print("Windows PowerShell: $env:GEMINI_API_KEY='sk-yourkey'")
-        print("Mac/Linux: export GEMINI_API_KEY='sk-yourkey'")
+    if not os.getenv("GROQ_API_KEY"):
+        print("CRITICAL: GROQ_API_KEY environment variable is not set.")
+        print("Windows PowerShell: $env:GROQ_API_KEY='sk-yourkey'")
+        print("Mac/Linux: export GROQ_API_KEY='sk-yourkey'")
         sys.exit(1)
         
     try:

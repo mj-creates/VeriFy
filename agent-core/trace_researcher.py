@@ -1,3 +1,14 @@
+
+import time
+def call_llm_with_retry(client, **kwargs):
+    for attempt in range(3):
+        try:
+            return client.chat.completions.create(**kwargs)
+        except Exception as e:
+            print(f'LLM Error: {e}, retrying in 25s...')
+            time.sleep(25)
+    return client.chat.completions.create(**kwargs)
+
 import json
 import os
 from typing import List, Optional
@@ -83,12 +94,12 @@ TOOLS = [
 ]
 
 class TraceResearcherAgent:
-    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str = None, model: str = "openai/gpt-oss-120b"):
         """
         Initializes the Trace Secondary Source Agent.
-        Defaults to using the GEMINI_API_KEY environment variable if no key is provided.
+        Defaults to using the GROQ_API_KEY environment variable if no key is provided.
         """
-        self.client = OpenAI(api_key=api_key or os.getenv("GEMINI_API_KEY"), base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        self.client = OpenAI(api_key=api_key or os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1")
         self.model = model
 
     def execute_research(self, query: str, max_steps: int = 5) -> dict:
@@ -104,7 +115,7 @@ class TraceResearcherAgent:
         
         # ReAct / Tool-Calling Loop
         for step in range(max_steps):
-            response = self.client.chat.completions.create(
+            response = call_llm_with_retry(self.client, 
                 model=self.model,
                 messages=messages,
                 tools=TOOLS,
@@ -141,7 +152,7 @@ class TraceResearcherAgent:
                 final_prompt = "You have completed your scan. Please output your final findings strictly in the required JSON schema."
                 messages.append({"role": "user", "content": final_prompt})
                 
-                final_response = self.client.chat.completions.create(
+                final_response = call_llm_with_retry(self.client, 
                     model=self.model,
                     messages=messages,
                     response_format={"type": "json_object"},

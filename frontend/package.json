@@ -1,0 +1,22 @@
+{
+  "name": "verify-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.5.4",
+    "framer-motion": "^13.1.1",
+    "lucide-react": "^1.34.0",
+    "next": "^16.3.3",
+    "postcss": "^8.5.26",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "tailwindcss": "^4.3.3",
+    "typewriter-effect": "^2.22.0"
+  }
+}

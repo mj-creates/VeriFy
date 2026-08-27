@@ -36,12 +36,12 @@ orchestrator = None
 def startup_event():
     global orchestrator
     try:
-        # This will look for GEMINI_API_KEY in the environment
+        # This will look for GROQ_API_KEY in the environment
         orchestrator = VeriFyOrchestrator()
         print("Successfully initialized VeriFy Orchestrator.")
     except Exception as e:
         print(f"Warning: Orchestrator failed to initialize on startup: {e}")
-        print("Please ensure GEMINI_API_KEY is set in your environment variables.")
+        print("Please ensure GROQ_API_KEY is set in your environment variables.")
 
 # --- API Models ---
 class QueryRequest(BaseModel):
@@ -67,7 +67,7 @@ def verify_claim(request: QueryRequest):
         except Exception as e:
             raise HTTPException(
                 status_code=500, 
-                detail=f"Orchestrator not ready. Ensure GEMINI_API_KEY is set. Error: {e}"
+                detail=f"Orchestrator not ready. Ensure GROQ_API_KEY is set. Error: {e}"
             )
             
     try:

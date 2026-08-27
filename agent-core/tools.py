@@ -56,8 +56,8 @@ def browser(url: str) -> str:
         
         text = response.text
         
-        # Truncate text to avoid blowing up the LLM context window
-        max_chars = 8000
+        # Truncate text to avoid blowing up the LLM context window and hitting rate limits
+        max_chars = 1200
         if len(text) > max_chars:
             text = text[:max_chars] + "\n... [Content Truncated due to length]"
             

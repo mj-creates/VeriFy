@@ -1,3 +1,14 @@
+
+import time
+def call_llm_with_retry(client, **kwargs):
+    for attempt in range(3):
+        try:
+            return client.chat.completions.create(**kwargs)
+        except Exception as e:
+            print(f'LLM Error: {e}, retrying in 25s...')
+            time.sleep(25)
+    return client.chat.completions.create(**kwargs)
+
 import json
 import os
 from typing import List, Literal, Dict, Any
@@ -44,12 +55,12 @@ SYSTEM_PROMPT = """You are Nova, the Debate and Consensus Judge Agent.
 """
 
 class NovaJudgeAgent:
-    def __init__(self, api_key: str = None, model: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str = None, model: str = "openai/gpt-oss-120b"):
         """
         Initializes the Nova Judge Agent.
-        Defaults to using the GEMINI_API_KEY environment variable if no key is provided.
+        Defaults to using the GROQ_API_KEY environment variable if no key is provided.
         """
-        self.client = OpenAI(api_key=api_key or os.getenv("GEMINI_API_KEY"), base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        self.client = OpenAI(api_key=api_key or os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1")
         self.model = model
 
     def judge_research(self, claim: str, research_outputs: List[Dict[str, Any]]) -> dict:
@@ -64,7 +75,7 @@ class NovaJudgeAgent:
             "research_outputs": research_outputs
         }, indent=2)
 
-        response = self.client.chat.completions.create(
+        response = call_llm_with_retry(self.client, 
             model=self.model,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -75,6 +86,13 @@ class NovaJudgeAgent:
         )
         
         raw_response = response.choices[0].message.content
+        if raw_response.startswith("```json"):
+            raw_response = raw_response[7:]
+        if raw_response.startswith("```"):
+            raw_response = raw_response[3:]
+        if raw_response.endswith("```"):
+            raw_response = raw_response[:-3]
+        raw_response = raw_response.strip()
         return json.loads(raw_response)
 
 # --- Example Usage ---
