@@ -17,7 +17,7 @@
 }
 
 .primary-cartoon-text {
-  @apply font-black text-black text-shadow-sm;
+  @apply font-black text-black;
 }
 
 .primary-cartoon-bg {
