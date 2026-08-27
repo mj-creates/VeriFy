@@ -55,8 +55,8 @@ class VeriFyOrchestrator:
                 "question": query,
                 "findings": [
                     {"agentName": "Vera", "sourceTier": "official", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"},
-                    {"agentName": "Vox", "sourceTier": "news", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"},
-                    {"agentName": "Trace", "sourceTier": "anecdotal", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"}
+                    {"agentName": "Vox", "sourceTier": "llm", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"},
+                    {"agentName": "Trace", "sourceTier": "reddit", "answer": "Direct factual query. No research needed.", "sourceUrl": "N/A", "recency": "N/A"}
                 ],
                 "judgment": {
                     "agreementSummary": route_decision.get("reasoning", "Direct answer provided."),
@@ -113,11 +113,11 @@ class VeriFyOrchestrator:
             
         findings = [
             map_finding("Vera", "official", vera_result),
-            map_finding("Vox", "news", vox_result),
-            map_finding("Trace", "anecdotal", trace_result)
+            map_finding("Vox", "llm", vox_result),
+            map_finding("Trace", "reddit", trace_result)
         ]
         
-        base_score = 80 if nova_verdict.get("evidence_tier_used") == "Official" else (60 if nova_verdict.get("evidence_tier_used") == "News" else 40)
+        base_score = 80 if nova_verdict.get("evidence_tier_used") == "Official" else (60 if nova_verdict.get("evidence_tier_used") == "Reddit" else 40)
         confidence = sol_response.get("confidence_score", 0)
         consistency_bonus = max(0, confidence - base_score)
         

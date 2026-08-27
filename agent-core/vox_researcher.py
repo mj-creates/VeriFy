@@ -31,68 +31,34 @@ class VoxOutput(BaseModel):
     citations: List[Citation]
     data_found: bool
 
-SYSTEM_PROMPT = """You are Vox, the News and Current Events Researcher Agent.
+SYSTEM_PROMPT = """You are Vox, the Base Knowledge LLM Agent.
 
-**Role:** The Journalist
-**Core Objective:** Independently investigate the query using recent news outlets, press releases, and industry circulars to establish timelines and journalistic consensus.
+**Role:** The Base Knowledge Expert
+**Core Objective:** Retrieve answers to the query purely from your own base knowledge without using any external tools or browsing. Provide a fast, general understanding or factual summary.
 **Input Expected:** The user's original query and a "RESEARCH" trigger from the Router.
-**Available Tools:** browser, search
+**Available Tools:** None.
 
 **Execution Steps:**
-1. Formulate search queries specifically targeting Reddit (e.g., using "site:reddit.com").
-2. Execute searches filtering for recent dates (especially if the claim is time-sensitive).
-3. Cross-reference at least two major Reddit threads to verify the narrative. (LIMIT yourself to browsing a MAXIMUM of 2 websites).
-4. Extract the latest developments, timelines, and the general consensus from Reddit users.
+1. Analyze the user's query.
+2. Retrieve the most accurate and general factual answer based purely on your pre-trained knowledge.
+3. Summarize your internal knowledge into a concise finding.
 
 **Rules & Constraints (Guardrails):**
-- You must limit your research to browsing a MAXIMUM of 2 websites. Do not over-research.
-- To decrease search time and focus on community news, you MUST ONLY search and cite Reddit (site:reddit.com).
-- Prioritize recency. If a claim changed recently, you must capture the most up-to-date information.
-- If sources conflict with each other, summarize the conflict. Do not pick a side.
+- You MUST NOT attempt to use any tools, search the web, or browse.
+- Provide a fast, accurate summary based solely on what you already know.
+- If you do not know the answer, explicitly state that it is beyond your base knowledge.
+- Since you are not browsing, your citations should simply list "LLM Base Knowledge".
 
 **Output Schema:**
 {
   "agent_name": "Vox",
-  "findings": "Summary of the Reddit consensus and recent events...",
+  "findings": "Summary of your internal knowledge regarding the claim...",
   "citations": [
-    {"source_name": "Reddit Thread", "url": "...", "publication_date": "YYYY-MM-DD"}
+    {"source_name": "LLM Base Knowledge", "url": "N/A", "publication_date": "N/A"}
   ],
   "data_found": true | false
 }
 """
-
-from tools import search, browser
-
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "search",
-            "description": "Execute a web search query for recent news articles, press releases, and industry circulars.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "The search query to execute"}
-                },
-                "required": ["query"],
-                "additionalProperties": False,
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "browser",
-            "description": "Read the content of a specific news webpage by providing its URL.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "url": {"type": "string", "description": "The URL of the news webpage to read"}
-                },
-            },
-        },
-    }
-]
 
 class VoxResearcherAgent:
     def __init__(self, api_key: str = None, model: str = "llama-3.1-8b-instant"):
@@ -112,69 +78,21 @@ class VoxResearcherAgent:
             {"role": "user", "content": f"Please investigate this query using news sources: {query}"}
         ]
 
-        print(f"[*] Vox starting investigation for: {query}")
+        print(f"[*] Vox retrieving base knowledge for: {query}")
         
-        # ReAct / Tool-Calling Loop
-        for step in range(max_steps):
-            response = call_llm_with_retry(self.client, 
-                model=self.model,
-                messages=messages,
-                tools=TOOLS,
-                tool_choice="auto",
-                temperature=0.3 # Slightly higher temperature for qualitative journalistic synthesis
-            )
+        # Single LLM Call to get the final JSON directly
+        final_prompt = "Please output your final findings strictly in the required JSON schema based on your internal knowledge."
+        messages.append({"role": "user", "content": final_prompt})
 
-            response_message = response.choices[0].message
-            messages.append(response_message)
-
-            if response_message.tool_calls:
-                for tool_call in response_message.tool_calls:
-                    function_name = tool_call.function.name
-                    function_args = json.loads(tool_call.function.arguments)
-
-                    if function_name == "search":
-                        tool_result = search(function_args.get("query"))
-                    elif function_name == "browser":
-                        url = function_args.get("url")
-                        if not url and "id" in function_args and isinstance(function_args["id"], str) and function_args["id"].startswith("http"):
-                            url = function_args["id"]
-                        if not url:
-                            for k, v in function_args.items():
-                                if isinstance(v, str) and v.startswith("http"):
-                                    url = v
-                                    break
-                        if not url:
-                            tool_result = "Error: Missing url parameter for browser."
-                        else:
-                            tool_result = browser(url)
-                    else:
-                        tool_result = "Error: Unknown tool."
-
-                    messages.append(
-                        {
-                            "tool_call_id": tool_call.id,
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_result,
-                        }
-                    )
-            else:
-                # No more tools called, time to generate the final JSON output
-                print("[*] Investigation complete, generating journalistic summary...")
-                final_prompt = "You have completed your investigation. Please output your final findings strictly in the required JSON schema."
-                messages.append({"role": "user", "content": final_prompt})
-                
-                final_response = call_llm_with_retry(self.client, 
-                    model=self.model,
-                    messages=messages,
-                    response_format={"type": "json_object"},
-                    temperature=0.0
-                )
-                
-                raw_response = final_response.choices[0].message.content
-                return json.loads(raw_response)
+        final_response = call_llm_with_retry(self.client,
+            model=self.model,
+            messages=messages,
+            response_format={"type": "json_object"},
+            temperature=0.0
+        )
         
-        return {"error": "Maximum research steps reached without completion."}
+        raw_response = final_response.choices[0].message.content
+        return json.loads(raw_response)
 
 # --- Example Usage ---
 if __name__ == "__main__":
