@@ -74,6 +74,7 @@ TOOLS = [
                     "query": {"type": "string", "description": "The search query to execute"}
                 },
                 "required": ["query"],
+                "additionalProperties": False,
             },
         },
     },
@@ -88,6 +89,7 @@ TOOLS = [
                     "url": {"type": "string", "description": "The URL of the news webpage to read"}
                 },
                 "required": ["url"],
+                "additionalProperties": False,
             },
         },
     }
