@@ -8,22 +8,41 @@ export default {
     extend: {
       colors: {
         agent: {
-          vera: "#4D96FF",   // Bright Blue
-          vox: "#FF6B6B",    // Bright Red
-          trace: "#6BCB77",  // Bright Green
-          nova: "#9D4EDD",   // Bright Purple
-          sol: "#FFD93D",    // Bright Yellow
-          quinn: "#FF9F43"   // Bright Orange
+          vera: "#7BDFF2",   // Baby Blue
+          vox: "#FF9AA2",    // Coral Pink
+          trace: "#B5EAD7",  // Mint Green
+          nova: "#C7CEEA",   // Lilac
+          sol: "#FFDAC1",    // Butter Yellow
+          quinn: "#FFB7B2"   // Peach
         },
-        cartoon: {
-          bg: "#F4F4F4",
-          border: "#000000"
+        candy: {
+          bg1: "#FFEDFA", // Very light pink
+          bg2: "#E6F4F1", // Very light mint
+          text: "#5D4E6D", // Soft dark purple/grey for text
         }
       },
       boxShadow: {
-        'cartoon': '6px 6px 0px 0px rgba(0,0,0,1)',
-        'cartoon-lg': '10px 10px 0px 0px rgba(0,0,0,1)',
-        'cartoon-sm': '4px 4px 0px 0px rgba(0,0,0,1)',
+        'bubbly': '0 8px 32px rgba(255, 182, 193, 0.4)',
+        'bubbly-lg': '0 12px 48px rgba(255, 182, 193, 0.5)',
+        'jelly-btn': '0 6px 0 rgba(209, 213, 219, 1)',
+        'jelly-btn-hover': '0 8px 0 rgba(209, 213, 219, 1)',
+        'jelly-btn-active': '0 0px 0 rgba(209, 213, 219, 1)',
+        'jelly-btn-color': '0 6px 0 rgba(0, 0, 0, 0.15)',
+      },
+      animation: {
+        'float-slow': 'float 6s ease-in-out infinite',
+        'float-fast': 'float 3s ease-in-out infinite',
+        'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        pulseSoft: {
+          '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'scale(1.05)', opacity: '0.8' },
+        }
       }
     },
   },

@@ -21,7 +21,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ name, classNam
 
   if (hasError) {
     return (
-      <div className={clsx(`flex items-center justify-center rounded-full text-white font-black text-4xl border-4 border-black shadow-[4px_4px_0px_0px_#000] ${colorMap[name]}`, className)} style={{ WebkitTextStroke: '1px black' }}>
+      <div className={clsx(`flex items-center justify-center rounded-full text-white font-black text-4xl border-4 border-white shadow-sm ${colorMap[name]}`, className)} style={{ WebkitTextStroke: '2px white' }}>
         {name.charAt(0)}
       </div>
     );
