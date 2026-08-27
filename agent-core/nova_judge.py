@@ -1,22 +1,10 @@
 
 import time
 def call_llm_with_retry(client, **kwargs):
-    import time
-    import re
-    for attempt in range(5):
+    for attempt in range(3):
         try:
             return client.chat.completions.create(**kwargs)
         except Exception as e:
-            error_str = str(e)
-            if "429" in error_str and "Please try again in" in error_str:
-                match = re.search(r'Please try again in (?:([0-9]+)m)?([0-9.]+)s', error_str)
-                if match:
-                    minutes = float(match.group(1)) if match.group(1) else 0.0
-                    seconds = float(match.group(2)) if match.group(2) else 0.0
-                    wait_time = (minutes * 60) + seconds + 2.0
-                    print(f"Rate limit hit. Waiting for {wait_time:.1f} seconds...")
-                    time.sleep(wait_time)
-                    continue
             print(f'LLM Error: {e}, retrying in 25s...')
             time.sleep(25)
     return client.chat.completions.create(**kwargs)
@@ -56,7 +44,6 @@ SYSTEM_PROMPT = """You are Nova, the Debate and Consensus Judge Agent.
 - If Vera states X, and Trace states Y, Vera wins automatically. You must explain that the public rumor is disproven by official policy.
 - Do not conduct new research or hallucinate data. You must only judge the data provided to you in the input JSON.
 - Your output must be strictly valid JSON, with no markdown formatting blocks outside the JSON, no conversational text, and no preambles.
-- You must choose exactly ONE winning agent's answer as the absolute truth. Do not blend the answers. Discard the losing agents entirely to reduce hallucinations.
 
 **Output Schema:**
 {
@@ -95,7 +82,7 @@ class NovaJudgeAgent:
                 {"role": "user", "content": user_input}
             ],
             response_format={"type": "json_object"},
-            temperature=0.0 # Nova needs to be highly deterministic and strict
+            temperature=0.2 # Nova needs to be highly deterministic and strict
         )
         
         raw_response = response.choices[0].message.content

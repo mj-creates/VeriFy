@@ -1,22 +1,10 @@
 
 import time
 def call_llm_with_retry(client, **kwargs):
-    import time
-    import re
-    for attempt in range(5):
+    for attempt in range(3):
         try:
             return client.chat.completions.create(**kwargs)
         except Exception as e:
-            error_str = str(e)
-            if "429" in error_str and "Please try again in" in error_str:
-                match = re.search(r'Please try again in (?:([0-9]+)m)?([0-9.]+)s', error_str)
-                if match:
-                    minutes = float(match.group(1)) if match.group(1) else 0.0
-                    seconds = float(match.group(2)) if match.group(2) else 0.0
-                    wait_time = (minutes * 60) + seconds + 2.0
-                    print(f"Rate limit hit. Waiting for {wait_time:.1f} seconds...")
-                    time.sleep(wait_time)
-                    continue
             print(f'LLM Error: {e}, retrying in 25s...')
             time.sleep(25)
     return client.chat.completions.create(**kwargs)
@@ -82,7 +70,7 @@ class QuinnRouterAgent:
                 {"role": "user", "content": query}
             ],
             response_format={"type": "json_object"},
-            temperature=0.0 # Using 0 for more deterministic routing logic
+            temperature=0.2 # Using 0 for more deterministic routing logic
         )
         
         raw_response = response.choices[0].message.content

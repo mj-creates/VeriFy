@@ -1,22 +1,10 @@
 
 import time
 def call_llm_with_retry(client, **kwargs):
-    import time
-    import re
-    for attempt in range(5):
+    for attempt in range(3):
         try:
             return client.chat.completions.create(**kwargs)
         except Exception as e:
-            error_str = str(e)
-            if "429" in error_str and "Please try again in" in error_str:
-                match = re.search(r'Please try again in (?:([0-9]+)m)?([0-9.]+)s', error_str)
-                if match:
-                    minutes = float(match.group(1)) if match.group(1) else 0.0
-                    seconds = float(match.group(2)) if match.group(2) else 0.0
-                    wait_time = (minutes * 60) + seconds + 2.0
-                    print(f"Rate limit hit. Waiting for {wait_time:.1f} seconds...")
-                    time.sleep(wait_time)
-                    continue
             print(f'LLM Error: {e}, retrying in 25s...')
             time.sleep(25)
     return client.chat.completions.create(**kwargs)
@@ -60,7 +48,6 @@ SYSTEM_PROMPT = """You are Vera, the Institutional Researcher Agent.
 - You must completely ignore news aggregators, opinion pieces, Wikipedia, and social media.
 - If no official data exists on the topic, you must explicitly state: "No official institutional data found." Do not guess.
 - Never synthesize your findings with what you *think* the news says. Stay strictly in your institutional lane.
-- Limit your research. You must browse a maximum of 2 webpages to save time.
 
 **Output Schema:**
 {
@@ -115,7 +102,7 @@ class VeraResearcherAgent:
         self.client = OpenAI(api_key=api_key or os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1")
         self.model = model
 
-    def execute_research(self, query: str, max_steps: int = 3) -> dict:
+    def execute_research(self, query: str, max_steps: int = 5) -> dict:
         """
         Executes a reasoning loop allowing Vera to search and read webpages before concluding.
         """
@@ -169,7 +156,7 @@ class VeraResearcherAgent:
                     model=self.model,
                     messages=messages,
                     response_format={"type": "json_object"},
-                    temperature=0.0
+                    temperature=0.2
                 )
                 
                 raw_response = final_response.choices[0].message.content
