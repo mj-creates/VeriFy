@@ -95,7 +95,7 @@ TOOLS = [
 ]
 
 class VeraResearcherAgent:
-    def __init__(self, api_key: str = None, model: str = "llama3-8b-8192"):
+    def __init__(self, api_key: str = None, model: str = "llama-3.1-8b-instant"):
         """
         Initializes the Vera Researcher Agent.
         Defaults to using the GROQ_API_KEY environment variable if no key is provided.
