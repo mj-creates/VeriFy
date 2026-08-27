@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-white min-h-screen overflow-x-hidden font-sans;
+  }
+}
+
+.glass-panel {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+}
+
+.primary-gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#4F7CFF] via-[#8B5CF6] to-[#EC4899];
+}
+
+.primary-gradient-bg {
+  @apply bg-gradient-to-r from-[#4F7CFF] via-[#8B5CF6] to-[#EC4899];
+}
