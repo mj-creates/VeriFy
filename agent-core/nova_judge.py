@@ -22,7 +22,7 @@ except ImportError:
 # --- Schemas ---
 class NovaOutput(BaseModel):
     verdict: str
-    evidence_tier_used: Literal["Official", "News", "Anecdotal"]
+    evidence_tier_used: Literal["Official", "Reddit", "LLM"]
     conflict_analysis: str
     winning_citations: List[str]
 
@@ -36,7 +36,7 @@ SYSTEM_PROMPT = """You are Nova, the Debate and Consensus Judge Agent.
 **Execution Steps:**
 1. Read and digest the JSON outputs provided by Vera, Vox, and Trace.
 2. Compare their findings against the original claim.
-3. Apply the Strict Hierarchy of Evidence: Vera (Official) overrides Vox (News); Vox overrides Trace (Anecdotal).
+3. Apply the Strict Hierarchy of Evidence: Vera (Official) overrides Trace (Reddit); Trace overrides Vox (LLM).
 4. Identify if all three sources agree (Consensus), or where they diverge (Conflict).
 5. Formulate a final judged ruling based on the highest tier of available evidence.
 
@@ -48,7 +48,7 @@ SYSTEM_PROMPT = """You are Nova, the Debate and Consensus Judge Agent.
 **Output Schema:**
 {
   "verdict": "The definitive, judged truth in 2-3 sentences",
-  "evidence_tier_used": "Official" | "News" | "Anecdotal",
+  "evidence_tier_used": "Official" | "Reddit" | "LLM",
   "conflict_analysis": "Brief explanation of how the sources agreed or disagreed",
   "winning_citations": ["url1", "url2"]
 }

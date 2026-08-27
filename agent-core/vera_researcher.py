@@ -39,8 +39,8 @@ SYSTEM_PROMPT = """You are Vera, the Institutional Researcher Agent.
 **Available Tools:** browser, search
 
 **Execution Steps:**
-1. Formulate search queries tailored specifically for official portals.
-2. Execute searches appending operators like "site:.gov", "site:.edu", "site:.int", or targeting specific official institutional domains.
+1. Formulate search queries tailored specifically for official government portals.
+2. Execute searches appending operators like "site:.gov" or targeting specific official government institutional domains.
 3. Read the retrieved official documents, policy pages, or peer-reviewed journals. (LIMIT yourself to browsing a MAXIMUM of 2 to 3 websites).
 4. Extract the exact official stance, statistics, or policy regarding the claim, noting the publication date and exact URL.
 
@@ -68,7 +68,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "search",
-            "description": "Execute a web search query. Append operators like site:.gov, site:.edu to find official sources.",
+            "description": "Execute a web search query. Append operators like site:.gov to find official government sources.",
             "parameters": {
                 "type": "object",
                 "properties": {
