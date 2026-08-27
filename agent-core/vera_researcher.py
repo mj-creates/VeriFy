@@ -87,7 +87,6 @@ TOOLS = [
                 "properties": {
                     "url": {"type": "string", "description": "The URL of the webpage to read"}
                 },
-                "required": ["url"],
             },
         },
     }
@@ -134,7 +133,18 @@ class VeraResearcherAgent:
                     if function_name == "search":
                         tool_result = search(function_args.get("query"))
                     elif function_name == "browser":
-                        tool_result = browser(function_args.get("url"))
+                        url = function_args.get("url")
+                        if not url and "id" in function_args and isinstance(function_args["id"], str) and function_args["id"].startswith("http"):
+                            url = function_args["id"]
+                        if not url:
+                            for k, v in function_args.items():
+                                if isinstance(v, str) and v.startswith("http"):
+                                    url = v
+                                    break
+                        if not url:
+                            tool_result = "Error: Missing url parameter for browser."
+                        else:
+                            tool_result = browser(url)
                     else:
                         tool_result = "Error: Unknown tool."
 
