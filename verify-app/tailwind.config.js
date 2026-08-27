@@ -8,57 +8,22 @@ export default {
     extend: {
       colors: {
         agent: {
-          vera: "#2DD4BF",   // Blue/teal
-          vox: "#F97316",    // Red/orange
-          trace: "#A3E635",  // Green/tan (lime)
-          nova: "#8B5CF6",   // Purple/violet
-          sol: "#F5C451",    // Gold
-          quinn: "#F59E0B"   // Yellow/orange
+          vera: "#4D96FF",   // Bright Blue
+          vox: "#FF6B6B",    // Bright Red
+          trace: "#6BCB77",  // Bright Green
+          nova: "#9D4EDD",   // Bright Purple
+          sol: "#FFD93D",    // Bright Yellow
+          quinn: "#FF9F43"   // Bright Orange
+        },
+        cartoon: {
+          bg: "#F4F4F4",
+          border: "#000000"
         }
       },
-      animation: {
-        'gradient-x': 'gradient-x 15s ease infinite',
-        'gradient-y': 'gradient-y 15s ease infinite',
-        'gradient-xy': 'gradient-xy 15s ease infinite',
-        'blob': 'blob 15s infinite',
-      },
-      keyframes: {
-        'gradient-y': {
-          '0%, 100%': {
-            'background-size': '400% 400%',
-            'background-position': 'center top'
-          },
-          '50%': {
-            'background-size': '200% 200%',
-            'background-position': 'center center'
-          }
-        },
-        'gradient-x': {
-          '0%, 100%': {
-            'background-size': '200% 200%',
-            'background-position': 'left center'
-          },
-          '50%': {
-            'background-size': '200% 200%',
-            'background-position': 'right center'
-          }
-        },
-        'gradient-xy': {
-          '0%, 100%': {
-            'background-size': '400% 400%',
-            'background-position': 'left center'
-          },
-          '50%': {
-            'background-size': '200% 200%',
-            'background-position': 'right center'
-          }
-        },
-        'blob': {
-          '0%': { transform: 'translate(0px, 0px) scale(1)' },
-          '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-          '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-          '100%': { transform: 'translate(0px, 0px) scale(1)' },
-        }
+      boxShadow: {
+        'cartoon': '6px 6px 0px 0px rgba(0,0,0,1)',
+        'cartoon-lg': '10px 10px 0px 0px rgba(0,0,0,1)',
+        'cartoon-sm': '4px 4px 0px 0px rgba(0,0,0,1)',
       }
     },
   },

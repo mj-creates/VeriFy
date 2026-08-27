@@ -22,7 +22,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ name, classNam
 
   if (hasError) {
     return (
-      <div className={clsx(`flex items-center justify-center rounded-full text-white font-bold text-2xl border-4 border-white/20 shadow-lg ${colorMap[name]}`, className)}>
+      <div className={clsx(`flex items-center justify-center rounded-full text-white font-black text-4xl border-4 border-black shadow-[4px_4px_0px_0px_#000] ${colorMap[name]}`, className)} style={{ WebkitTextStroke: '1px black' }}>
         {name.charAt(0)}
       </div>
     );
@@ -30,10 +30,10 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({ name, classNam
 
   return (
     <motion.img
-      src={`/assets/characters/${lowerName}.png`}
+      src={`/assets/characters/${name}.png`}
       alt={name}
       onError={() => setHasError(true)}
-      className={clsx("object-contain drop-shadow-2xl", className)}
+      className={clsx("object-contain", className)}
     />
   );
 };

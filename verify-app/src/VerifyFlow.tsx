@@ -27,7 +27,7 @@ export const VerifyFlow: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-transparent text-white font-sans selection:bg-agent-nova/30 selection:text-white">
+    <div className="relative min-h-screen font-sans selection:bg-[#4D96FF] selection:text-white">
       <AnimatedBackground />
       <AnimatePresence mode="wait">
         <motion.div

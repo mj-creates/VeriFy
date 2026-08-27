@@ -4,18 +4,22 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-white min-h-screen overflow-x-hidden font-sans;
+    @apply bg-[#FFE5F1] text-black min-h-screen overflow-x-hidden font-sans bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:24px_24px];
   }
 }
 
-.glass-panel {
-  @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+.cartoon-panel {
+  @apply bg-white border-4 border-black shadow-cartoon rounded-2xl;
 }
 
-.primary-gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#4F7CFF] via-[#8B5CF6] to-[#EC4899];
+.cartoon-button {
+  @apply bg-white border-4 border-black shadow-cartoon-sm rounded-xl font-black uppercase tracking-wider transition-all active:translate-y-1 active:translate-x-1 active:shadow-none hover:-translate-y-1 hover:-translate-x-1 hover:shadow-cartoon;
 }
 
-.primary-gradient-bg {
-  @apply bg-gradient-to-r from-[#4F7CFF] via-[#8B5CF6] to-[#EC4899];
+.primary-cartoon-text {
+  @apply font-black text-black text-shadow-sm;
+}
+
+.primary-cartoon-bg {
+  @apply bg-[#FFD93D] border-4 border-black;
 }

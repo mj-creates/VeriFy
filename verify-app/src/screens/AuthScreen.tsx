@@ -13,7 +13,6 @@ export const AuthScreen: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock login
     setTimeout(() => {
       setIsLoading(false);
       dispatch({ type: 'NEXT_STEP' });
@@ -26,35 +25,28 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4">
-      {/* Faint background Qs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute top-1/4 left-1/4 text-6xl text-agent-vera rotate-12">?</div>
-        <div className="absolute top-1/3 right-1/3 text-8xl text-agent-nova -rotate-12">?</div>
-        <div className="absolute bottom-1/4 left-1/3 text-5xl text-agent-sol rotate-45">?</div>
-      </div>
-
       <motion.div 
-        initial={skipAnim ? {} : { opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass-panel rounded-3xl p-8 md:p-12 w-full max-w-md z-10"
+        initial={skipAnim ? {} : { opacity: 0, scale: 0.8, rotate: -5 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ type: "spring", bounce: 0.6 }}
+        className="cartoon-panel p-8 md:p-12 w-full max-w-md z-10 bg-[#FFD93D]"
       >
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold primary-gradient-text h-[40px]">
+        <div className="flex justify-between items-center mb-8 border-b-4 border-black pb-4">
+          <h2 className="text-4xl font-black text-white h-[40px] uppercase" style={{ WebkitTextStroke: '2px black', textShadow: '4px 4px 0px #000' }}>
             {skipAnim ? (mode === 'signin' ? 'Sign In' : 'Sign Up') : (
               <TypewriterText 
                 key={mode} 
                 text={mode === 'signin' ? 'Sign In' : 'Sign Up'} 
-                cursorColor="bg-agent-vox"
+                cursorColor="bg-black"
               />
             )}
           </h2>
           <button 
             type="button"
             onClick={() => setMode(m => m === 'signin' ? 'signup' : 'signin')}
-            className="text-sm text-agent-vera hover:text-white transition-colors"
+            className="text-sm font-black uppercase underline hover:text-[#4D96FF] transition-colors"
           >
-            Toggle to {mode === 'signin' ? 'Sign Up' : 'Sign In'}
+            Switch to {mode === 'signin' ? 'Sign Up' : 'Sign In'}
           </button>
         </div>
 
@@ -62,31 +54,31 @@ export const AuthScreen: React.FC = () => {
           {formFields.map((field, i) => (
             <motion.div
               key={`${mode}-${field}`}
-              initial={skipAnim ? {} : { opacity: 0, x: -20 }}
+              initial={skipAnim ? {} : { opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: skipAnim ? 0 : i * 0.08 }}
+              transition={{ delay: skipAnim ? 0 : i * 0.1, type: "spring" }}
             >
+              <label className="block text-black font-black uppercase mb-1">{field}</label>
               <input 
                 type={field.includes('Password') ? 'password' : field === 'Email' ? 'email' : 'text'}
-                placeholder={field}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-agent-nova transition-all"
+                className="w-full bg-white border-4 border-black shadow-[4px_4px_0px_0px_#000] rounded-xl px-4 py-3 text-black font-bold focus:outline-none focus:translate-y-1 focus:translate-x-1 focus:shadow-none transition-all"
               />
             </motion.div>
           ))}
           
           <motion.button
-            transition={{ duration: 0.4 }}
             disabled={isLoading}
-            className="mt-6 w-full py-4 rounded-xl primary-gradient-bg text-white font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center gap-2"
+            className="mt-6 w-full py-4 text-xl bg-[#FF6B6B] text-white cartoon-button flex items-center justify-center gap-2"
+            style={{ WebkitTextStroke: '1px black' }}
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mode === 'signin' ? 'Login' : 'Create Account')}
+            {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : (mode === 'signin' ? 'Lets Go!' : 'Join Us!')}
           </motion.button>
         </form>
       </motion.div>
 
       {!skipAnim && (
-        <button onClick={() => setSkipAnim(true)} className="absolute bottom-8 right-8 text-white/50 hover:text-white text-sm uppercase tracking-widest z-50">
+        <button onClick={() => setSkipAnim(true)} className="absolute bottom-8 right-8 text-black font-bold text-sm uppercase tracking-widest z-50 bg-white border-2 border-black px-4 py-2 shadow-[2px_2px_0px_0px_#000] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_0px_#000] active:translate-y-0 active:translate-x-0 active:shadow-none transition-all">
           Skip animation
         </button>
       )}
